@@ -1,15 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
 package myPackage;
 
 import java.util.*;
 
 class Node implements Comparable<Node> {
-
     public int x, y;
-    public double gCost, hCost;
+    public double gCost = Double.POSITIVE_INFINITY;
+    public double hCost;
     public Node parent;
 
     public Node(int x, int y) {
@@ -28,9 +24,7 @@ class Node implements Comparable<Node> {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Node)) {
-            return false;
-        }
+        if (!(obj instanceof Node)) return false;
         Node other = (Node) obj;
         return this.x == other.x && this.y == other.y;
     }
@@ -39,11 +33,9 @@ class Node implements Comparable<Node> {
     public int hashCode() {
         return Objects.hash(x, y);
     }
-
 }
 
 public class AStarSearch {
-
     static int[][] grid = {
         {0, 0, 0, 0, 0},
         {0, 0, 1, 0, 0},
@@ -56,6 +48,13 @@ public class AStarSearch {
     static List<Node> findPath(Node start, Node goal) {
         PriorityQueue<Node> openSet = new PriorityQueue<>();
         Set<Node> closedSet = new HashSet<>();
+        Map<String, Node> allNodes = new HashMap<>(); // store references
+
+        // Initialize start node
+        start.gCost = 0;
+        start.hCost = Math.abs(start.x - goal.x) + Math.abs(start.y - goal.y);
+        openSet.add(start);
+        allNodes.put(start.x + "," + start.y, start);
 
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
@@ -71,31 +70,26 @@ public class AStarSearch {
             }
 
             closedSet.add(current);
+
             for (int[] dir : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
                 int nx = current.x + dir[0], ny = current.y + dir[1];
-                if (nx >= 0 && nx < ROWS && ny < COLS && grid[nx][ny] == 0) {
-                    Node neigbor = new Node(nx, ny);
-                    if (closedSet.contains(neigbor)) {
-                        continue;
-                    }
+
+                if (nx >= 0 && nx < ROWS && ny >= 0 && ny < COLS && grid[nx][ny] == 0) {
+                    String key = nx + "," + ny;
+                    Node neighbor = allNodes.getOrDefault(key, new Node(nx, ny));
+                    allNodes.put(key, neighbor);
+
+                    if (closedSet.contains(neighbor)) continue;
 
                     double tentativeG = current.gCost + 1;
-                    boolean better = false;
-                    if (!openSet.contains(neigbor)) {
-                        neigbor.hCost = Math.abs(nx - goal.x) + Math.abs(ny - goal.y);
-                        better = true;
-                    } else if (tentativeG < neigbor.gCost) {
-                        better = true;
-                    }
-
-                    if (better) {
-                        neigbor.gCost = tentativeG;
-                        neigbor.parent = current;
-                        openSet.add(neigbor);
+                    if (tentativeG < neighbor.gCost) {
+                        neighbor.gCost = tentativeG;
+                        neighbor.hCost = Math.abs(nx - goal.x) + Math.abs(ny - goal.y);
+                        neighbor.parent = current;
+                        openSet.add(neighbor);
                     }
                 }
             }
-
         }
         return null;
     }
@@ -114,5 +108,4 @@ public class AStarSearch {
             System.out.println("No path found");
         }
     }
-
 }
